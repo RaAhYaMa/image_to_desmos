@@ -1,1 +1,7 @@
 env/
+*.jpg
+*.png
+*jpeg
+*.bmp
+*.svg
+*.html
