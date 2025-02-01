@@ -1,5 +1,6 @@
 import cv2 as cv
 import os
+import subprocess
 
 def callback(input):
     pass
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     cv.namedWindow('canny')
     cv.createTrackbar("minThres", 'canny', 0, 255, callback)
     cv.createTrackbar("maxThres", 'canny', 0, 255, callback)
-    print("Slide or input the minThres and maxThres values")
+    print("\nSlide or input the minThres and maxThres values")
     print("Click 'q' if you are done with the settings")
     while True:
         if cv.waitKey(1) & 0xFF == ord('q'):
@@ -52,4 +53,10 @@ if __name__ == "__main__":
             print("ERROR:")
             print(e)
             exit()
+    print(f"\nMaking {name}.bmp")
     cv.imwrite(f"{name}.bmp", canny)
+    print(f"Done making {name}.bmp")
+
+    print(f"\nRunning potrace --svg {name}.bmp -o {name}.svg")
+    subprocess.run(["potrace", "--svg", f"{name}.bmp", "-o", f"{name}.svg"], check=True)
+    print(f"Done running potrace --svg {name}.bmp -o {name}.svg")
