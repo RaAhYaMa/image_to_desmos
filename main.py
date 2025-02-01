@@ -4,36 +4,32 @@ import subprocess
 from svgpathtools import svg2paths
 import json
 
-def callback(input):
-    pass
-
-if __name__ == "__main__":
-    dct = {}
-    count = 0
+def get_image_files():
+    image_files = {}
+    image_count = 0
     for file in os.listdir():
         if file.endswith(".jpg") or file.endswith(".png") or file.endswith(".jpeg"):
-            count += 1
-            dct[count] = file
-    if count == 0:
-        print("No image found")
-        exit()
+            image_count += 1
+            image_files[image_count] = file
+    return image_files
+
+def select_image(image_files):
     print("List of image in this folder:")
-    for index, file in dct.items():
+    for index, file in image_files.items():
         print(f"{index}: {file}")
     while True:
-        index = input(f"Choose one of it (1{' - ' + str(len(dct)) if len(dct) > 1 else ''}): ")
+        index = input(f"Choose one of it (1{' - ' + str(len(image_files)) if len(image_files) > 1 else ''}): ")
         try:
-            img_dir = dct[int(index)]
+            img_dir = image_files[int(index)]
             break
         except:
             print("Invalid index")
+    return img_dir
 
-    img = cv.imread(img_dir)
-    img = cv.GaussianBlur(img, (5, 5), 1.4)
-
+def apply_canny_edge_detection(img):
     cv.namedWindow('canny')
-    cv.createTrackbar("minThres", 'canny', 0, 255, callback)
-    cv.createTrackbar("maxThres", 'canny', 0, 255, callback)
+    cv.createTrackbar("minThres", 'canny', 0, 255, lambda x: None)
+    cv.createTrackbar("maxThres", 'canny', 0, 255, lambda x: None)
     print("\nSlide or input the minThres and maxThres values")
     print("Click 'q' if you are done with the settings")
     while True:
@@ -43,26 +39,12 @@ if __name__ == "__main__":
         max_thres = cv.getTrackbarPos('maxThres', 'canny')
         canny = cv.Canny(img, min_thres, max_thres)
         cv.imshow('canny', canny)
-
     cv.destroyAllWindows()
-    name = ""
-    while True:
-        try:
-            name = input("Name for the output: ")
-            if len(name) > 0:
-                break
-        except Exception as e:
-            print("ERROR:")
-            print(e)
-            exit()
-    print(f"\nMaking {name}.bmp")
+    return canny
+
+def generate_output_files(canny, name):
     cv.imwrite(f"{name}.bmp", canny)
-    print(f"Done making {name}.bmp")
-
-    print(f"\nRunning potrace --svg {name}.bmp -o {name}.svg")
     subprocess.run(["potrace", "--svg", f"{name}.bmp", "-o", f"{name}.svg"], check=True)
-    print(f"Done running potrace --svg {name}.bmp -o {name}.svg")
-
     paths, attributes = svg2paths(f"{name}.svg")
 
     print(f"\nMaking {name}.html")
@@ -197,3 +179,15 @@ if __name__ == "__main__":
 
     print(f"\nCongratz, you've made a desmos art")
     print(f"The result is in {name}.html")
+
+if __name__ == "__main__":
+    image_files = get_image_files()
+    if len(image_files) == 0:
+        print("No image found")
+        exit()
+    img_dir = select_image(image_files)
+    img = cv.imread(img_dir)
+    img = cv.GaussianBlur(img, (5, 5), 1.4)
+    canny = apply_canny_edge_detection(img)
+    name = input("Name for the output: ")
+    generate_output_files(canny, name)
