@@ -21,6 +21,12 @@ def select_image(image_files):
         index = input(f"Choose one of it (1{' - ' + str(len(image_files)) if len(image_files) > 1 else ''}): ")
         try:
             img_dir = image_files[int(index)]
+            if not os.path.exists(img_dir):
+                print("Error: Image file does not exist.")
+                continue
+            if not os.path.isfile(img_dir):
+                print("Error: Selected file is not an image file.")
+                continue
             break
         except:
             print("Invalid index")
@@ -43,9 +49,23 @@ def apply_canny_edge_detection(img):
     return canny
 
 def generate_output_files(canny, name):
-    cv.imwrite(f"{name}.bmp", canny)
-    subprocess.run(["potrace", "--svg", f"{name}.bmp", "-o", f"{name}.svg"], check=True)
-    paths, attributes = svg2paths(f"{name}.svg")
+    try:
+        cv.imwrite(f"{name}.bmp", canny)
+    except Exception as e:
+        print(f"Error: Failed to write BMP file - {e}")
+        return
+    
+    try:
+        subprocess.run(["potrace", "--svg", f"{name}.bmp", "-o", f"{name}.svg"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Failed to generate SVG file - {e}")
+        return
+    
+    try:
+        paths, _ = svg2paths(f"{name}.svg")
+    except Exception as e:
+        print(f"Error: Failed to parse SVG file - {e}")
+        return
 
     print(f"\nMaking {name}.html")
     data = []
@@ -179,6 +199,7 @@ def generate_output_files(canny, name):
 
     print(f"\nCongratz, you've made a desmos art")
     print(f"The result is in {name}.html")
+    print(f"Open it in your favorite browser!")
 
 if __name__ == "__main__":
     image_files = get_image_files()
@@ -187,7 +208,23 @@ if __name__ == "__main__":
         exit()
     img_dir = select_image(image_files)
     img = cv.imread(img_dir)
+    if img is None:
+        print("Error: Failed to read image file.")
+        exit()
     img = cv.GaussianBlur(img, (5, 5), 1.4)
     canny = apply_canny_edge_detection(img)
-    name = input("Name for the output: ")
+    while True:
+        name = input("\nName for the output: ")
+        if not name:
+            print("Error: Please enter a valid file name.")
+            continue
+        if not name.replace('.', '', 1).replace('_', '').isalnum():
+            print("Error: File name contains invalid characters.")
+            continue
+        if name in ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']:
+            print("Error: File name is a reserved name.")
+            continue
+        if os.path.exists(name + '.bmp') or os.path.exists(name + '.svg'):
+            print(f"File {name} will be overwrite!")
+        break
     generate_output_files(canny, name)
