@@ -95,9 +95,9 @@ After processing, the following files will be generated:
 
 Open the generated `.html` file in a web browser to view your Desmos-generated art.
 
-## License
-This project is open-source under the MIT License. However, **this project must not be commercialized** in any form.
-
 ## Contributions
 Feel free to submit issues and pull requests to improve this project!
+
+## License & Usage
+This project is released under an open-source license but **must not be commercialized**. Any form of monetization, including selling, licensing, or using it for commercial purposes, is strictly prohibited.
 
